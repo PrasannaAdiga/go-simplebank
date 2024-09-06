@@ -16,8 +16,7 @@ INSERT INTO transfers (
   amount
 ) VALUES (
   $1, $2, $3
-)
-RETURNING id, from_account_id, to_account_id, amount, create_at
+) RETURNING id, from_account_id, to_account_id, amount, create_at
 `
 
 type CreateTransferParams struct {
@@ -37,16 +36,6 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		&i.CreateAt,
 	)
 	return i, err
-}
-
-const deleteTransfer = `-- name: DeleteTransfer :exec
-DELETE FROM transfers
-WHERE id = $1
-`
-
-func (q *Queries) DeleteTransfer(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteTransfer, id)
-	return err
 }
 
 const getTransfer = `-- name: GetTransfer :one
@@ -69,18 +58,28 @@ func (q *Queries) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
 
 const listTransfers = `-- name: ListTransfers :many
 SELECT id, from_account_id, to_account_id, amount, create_at FROM transfers
+WHERE 
+    from_account_id = $1 OR
+    to_account_id = $2
 ORDER BY id
-LIMIT $1
-OFFSET $2
+LIMIT $3
+OFFSET $4
 `
 
 type ListTransfersParams struct {
-	Limit  int32
-	Offset int32
+	FromAccountID int64
+	ToAccountID   int64
+	Limit         int32
+	Offset        int32
 }
 
 func (q *Queries) ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error) {
-	rows, err := q.db.Query(ctx, listTransfers, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listTransfers,
+		arg.FromAccountID,
+		arg.ToAccountID,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -103,31 +102,4 @@ func (q *Queries) ListTransfers(ctx context.Context, arg ListTransfersParams) ([
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateTransfer = `-- name: UpdateTransfer :one
-UPDATE transfers
-set amount = $3
-WHERE from_account_id = $1 
-AND to_account_id = $2
-RETURNING id, from_account_id, to_account_id, amount, create_at
-`
-
-type UpdateTransferParams struct {
-	FromAccountID int64
-	ToAccountID   int64
-	Amount        int64
-}
-
-func (q *Queries) UpdateTransfer(ctx context.Context, arg UpdateTransferParams) (Transfer, error) {
-	row := q.db.QueryRow(ctx, updateTransfer, arg.FromAccountID, arg.ToAccountID, arg.Amount)
-	var i Transfer
-	err := row.Scan(
-		&i.ID,
-		&i.FromAccountID,
-		&i.ToAccountID,
-		&i.Amount,
-		&i.CreateAt,
-	)
-	return i, err
 }
