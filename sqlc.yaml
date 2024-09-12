@@ -12,7 +12,7 @@ sql:
       go:
         package: "db"
         out: "./db/sqlc"
-        sql_package: "pgx/v5"
+        sql_package: "database/sql"
 overrides:
     go: null
 plugins: []
