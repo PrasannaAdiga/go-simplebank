@@ -50,3 +50,4 @@ jobs:
 
     - name: Test
       run: make test # we are running make test command which we have already added in Makefile
+      
