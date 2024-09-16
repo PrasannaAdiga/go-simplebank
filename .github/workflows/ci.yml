@@ -11,6 +11,25 @@ jobs: # define jobs which will be run under this workflow
 
   test: # defining a job which will run our tests
     runs-on: ubuntu-latest
+
+    # Service containers to run with `container-job`
+    services: # We use services keyword to run any external services
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:12
+        # Provide the password for postgres
+        env:
+          POSTGRESS_USER: root
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: simple_bank
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:  # define multiple steps under each job
     - uses: actions/checkout@v4 # uses predefined actions
 
@@ -21,6 +40,9 @@ jobs: # define jobs which will be run under this workflow
 
     - name: Build # This step is actually not needed since go test will build automatically
       run: go build -v ./...
+
+    - name: Run migrations # create all the postgres db schema and tables
+      run: make migrateup
 
     - name: Test
       run: make test # we are running make test command which we have already added in Makefile
