@@ -1,0 +1,26 @@
+# This Workflow runs all the unit tests as soon as code is merged o=to master
+name: ci-test # this name will be displayed in github repo action UI page
+
+on: # define event that trigger this workflow
+  push: 
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs: # define jobs which will be run under this workflow
+
+  test: # defining a job which will run our tests
+    runs-on: ubuntu-latest
+    steps:  # define multiple steps under each job
+    - uses: actions/checkout@v4 # uses predefined actions
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Build # This step is actually not needed since go test will build automatically
+      run: go build -v ./...
+
+    - name: Test
+      run: make test # we are running make test command which we have already added in Makefile
