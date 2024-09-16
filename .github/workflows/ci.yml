@@ -3,9 +3,9 @@ name: Run unit tests # this name will be displayed in github repo action UI page
 
 on:  # define event that trigger this workflow
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
 
@@ -50,4 +50,3 @@ jobs:
 
     - name: Test
       run: make test # we are running make test command which we have already added in Makefile
-      
